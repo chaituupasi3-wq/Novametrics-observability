@@ -1,10 +1,11 @@
+
 name: NovaMetrics CI Pipeline
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
 
 jobs:
   validate-site:
@@ -21,14 +22,14 @@ jobs:
 
       - name: Deploy Site to Test Path
         run: |
-          sudo mkdir -p /var/www/novametrics/site
-          sudo cp -r site/* /var/www/novametrics/site/
-          sudo chown -R www-data:www-data /var/www/novametrics
+          sudo mkdir -p /var/www/novametrics-observability/site
+          sudo cp -a site/. /var/www/novametrics-observability/site/
+          sudo chown -R www-data:www-data /var/www/novametrics-observability
 
       - name: Configure Nginx Test Server Block
         run: |
           sudo cp conf/nginx.conf /etc/nginx/sites-available/novametrics.conf
-          sudo ln -s /etc/nginx/sites-available/novametrics.conf /etc/nginx/sites-enabled/
+          sudo ln -s /etc/nginx/sites-available/novametrics.conf /etc/nginx/sites-enabled/novametrics.conf
           sudo rm -f /etc/nginx/sites-enabled/default
           sudo nginx -t
           sudo systemctl restart nginx
@@ -36,8 +37,6 @@ jobs:
       - name: Run Telemetry Check Script
         run: |
           chmod +x scripts/metrics-check.sh
-          # Test local endpoints via curl
-          curl -I http://localhost/index.html
-          curl -I http://localhost/metrics.html
-          # Execute the automated verification script
+          curl --fail --silent --show-error -I http://localhost/index.html
+          curl --fail --silent --show-error -I http://localhost/metrics.html
           ./scripts/metrics-check.sh
